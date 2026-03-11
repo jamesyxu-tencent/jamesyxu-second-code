@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RestController
 public class AiHelloWorldController {
 
-    private static final String DASHSCOPE_API_KEY = "my_app_keys";
+    private static final String DASHSCOPE_API_KEY = "sk-your-dashscope-api-key";
     private static final String DASHSCOPE_CHAT_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
