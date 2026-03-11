@@ -1,3 +1,14 @@
 spring:
   application:
     name: jamesyxu-second-code
+#  ai:
+#    openai:
+#      api-key: sk-94027d471dfe42a1ad0449a1a5fe7f3e
+#      base-url: https://api.deepseek.com
+#      chat:
+#        options:
+#          model: deepseek-chat
+#          temperature: 0.7
+
+server:
+  port: 8080
