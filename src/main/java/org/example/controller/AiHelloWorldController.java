@@ -13,17 +13,19 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 public class AiHelloWorldController {
 
-    private static final String DASHSCOPE_API_KEY = "my-app-keys";
+    private static final String DASHSCOPE_API_KEY = "my_app_keys";
     private static final String DASHSCOPE_CHAT_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    private static final Map<String, List<Map<String, String>>> conversationHistoryMap = new ConcurrentHashMap<>();
 
     @GetMapping("/api/hello")
     public String showHelloPage() {
@@ -42,7 +44,7 @@ public class AiHelloWorldController {
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("model", "qwen-turbo");
             requestBody.put("stream", false);
-            requestBody.put("messages", new Object[] {
+            requestBody.put("messages", new Object[]{
                     Map.of("role", "user", "content", "用一句话欢迎用户：" + name)
             });
 
@@ -69,7 +71,14 @@ public class AiHelloWorldController {
     }
 
     @GetMapping(value = "/api/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter chatStream(@RequestParam(value = "message", defaultValue = "你好") String message) {
+    public SseEmitter chatStream(@RequestParam(value = "message", defaultValue = "你好") String message,
+                                 @RequestParam(value = "sessionId", required = false) String sessionId) {
+
+        if (sessionId == null || sessionId.isEmpty()) {
+            sessionId = UUID.randomUUID().toString();
+        }
+
+        String finalSessionId = sessionId;
         SseEmitter emitter = new SseEmitter(0L);
 
         if (DASHSCOPE_API_KEY == null || DASHSCOPE_API_KEY.isEmpty() || "sk-your-dashscope-api-key".equals(DASHSCOPE_API_KEY)) {
@@ -84,14 +93,16 @@ public class AiHelloWorldController {
 
         CompletableFuture.runAsync(() -> {
             try {
+                List<Map<String, String>> conversationHistory = conversationHistoryMap.computeIfAbsent(finalSessionId, k -> new ArrayList<>());
+
+                conversationHistory.add(Map.of("role", "user", "content", message));
+
                 HttpClient client = HttpClient.newHttpClient();
 
                 Map<String, Object> requestBody = new HashMap<>();
                 requestBody.put("model", "qwen-turbo");
                 requestBody.put("stream", true);
-                requestBody.put("messages", new Object[] {
-                        Map.of("role", "user", "content", message)
-                });
+                requestBody.put("messages", conversationHistory.toArray(new Object[0]));
 
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(DASHSCOPE_CHAT_URL))
@@ -99,6 +110,8 @@ public class AiHelloWorldController {
                         .header("Authorization", "Bearer " + DASHSCOPE_API_KEY)
                         .POST(HttpRequest.BodyPublishers.ofByteArray(OBJECT_MAPPER.writeValueAsBytes(requestBody)))
                         .build();
+
+                StringBuilder fullResponse = new StringBuilder();
 
                 client.send(request, HttpResponse.BodyHandlers.ofLines()).body().forEach(line -> {
                     try {
@@ -116,6 +129,7 @@ public class AiHelloWorldController {
                                         String content = delta.get("content").asText();
                                         if (content != null && !content.isEmpty()) {
                                             emitter.send(content);
+                                            fullResponse.append(content);
                                         }
                                     }
                                 }
@@ -132,12 +146,30 @@ public class AiHelloWorldController {
                     }
                 });
 
+                if (fullResponse.length() > 0) {
+                    conversationHistory.add(Map.of("role", "assistant", "content", fullResponse.toString()));
+                }
+
             } catch (Exception e) {
                 emitter.completeWithError(e);
             }
         });
 
         return emitter;
+    }
+
+    @GetMapping("/api/chat/clear")
+    public Map<String, String> clearConversation(@RequestParam(value = "sessionId", required = false) String sessionId) {
+        Map<String, String> result = new HashMap<>();
+        if (sessionId != null && !sessionId.isEmpty()) {
+            conversationHistoryMap.remove(sessionId);
+            result.put("status", "success");
+            result.put("message", "已清空会话历史");
+        } else {
+            result.put("status", "error");
+            result.put("message", "请提供 sessionId");
+        }
+        return result;
     }
 
 }
