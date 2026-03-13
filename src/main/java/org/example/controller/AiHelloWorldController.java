@@ -2,6 +2,9 @@ package org.example.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.vo.base.ApiResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,7 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @RestController
 public class AiHelloWorldController {
 
-    private static final String DASHSCOPE_API_KEY = "sk-your-dashscope-api-key";
+    private static final Logger log = LoggerFactory.getLogger(AiHelloWorldController.class);
+
+    private static final String DASHSCOPE_API_KEY = "sk-4d565a8750e94b9abf0f525ed530ddad";
     private static final String DASHSCOPE_CHAT_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -28,16 +33,12 @@ public class AiHelloWorldController {
     private static final Map<String, List<Map<String, String>>> conversationHistoryMap = new ConcurrentHashMap<>();
 
     @GetMapping("/api/hello")
-    public String showHelloPage() {
-        return "欢迎访问 AI 应用！请访问 /index.html 或使用 /api/sayHello 接口";
+    public ApiResult<String> showHelloPage() {
+        return ApiResult.success("欢迎访问 AI 应用！请访问 /index.html 或使用 /api/sayHello 接口");
     }
 
     @GetMapping("/api/sayHello")
-    public String sayHello(@RequestParam(value = "name", defaultValue = "World") String name) {
-        if (DASHSCOPE_API_KEY == null || DASHSCOPE_API_KEY.isEmpty() || "sk-your-dashscope-api-key".equals(DASHSCOPE_API_KEY)) {
-            return "Hello " + name + "! 欢迎进入 AI 开发世界！(请先配置通义千问 API Key)";
-        }
-
+    public ApiResult<String> sayHello(@RequestParam(value = "name", defaultValue = "World") String name) {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
@@ -61,18 +62,20 @@ public class AiHelloWorldController {
 
             if (jsonNode.has("choices") && jsonNode.get("choices").isArray() &&
                     jsonNode.get("choices").size() > 0) {
-                return jsonNode.get("choices").get(0).get("message").get("content").asText();
+                return ApiResult.success(jsonNode.get("choices").get(0).get("message").get("content").asText());
             }
 
-            return "Hello " + name + "! 欢迎进入 AI 开发世界！";
+            return ApiResult.success("Hello " + name + "! 欢迎进入 AI 开发世界！");
         } catch (Exception e) {
-            return "Hello " + name + "! 欢迎进入 AI 开发世界！(AI 服务暂时不可用)";
+            return ApiResult.success("Hello " + name + "! 欢迎进入 AI 开发世界！(AI 服务暂时不可用))");
         }
     }
 
     @GetMapping(value = "/api/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter chatStream(@RequestParam(value = "message", defaultValue = "你好") String message,
                                  @RequestParam(value = "sessionId", required = false) String sessionId) {
+
+        log.info("用户提问：{}，sessionId：{}", message, sessionId);
 
         if (sessionId == null || sessionId.isEmpty()) {
             sessionId = UUID.randomUUID().toString();
@@ -159,7 +162,7 @@ public class AiHelloWorldController {
     }
 
     @GetMapping("/api/chat/clear")
-    public Map<String, String> clearConversation(@RequestParam(value = "sessionId", required = false) String sessionId) {
+    public ApiResult<Map<String, String>> clearConversation(@RequestParam(value = "sessionId", required = false) String sessionId) {
         Map<String, String> result = new HashMap<>();
         if (sessionId != null && !sessionId.isEmpty()) {
             conversationHistoryMap.remove(sessionId);
@@ -169,7 +172,7 @@ public class AiHelloWorldController {
             result.put("status", "error");
             result.put("message", "请提供 sessionId");
         }
-        return result;
+        return ApiResult.success(result);
     }
 
 }

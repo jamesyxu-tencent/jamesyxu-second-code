@@ -62,6 +62,18 @@
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>com.github.xiaoymin</groupId>
+			<artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+			<version>4.5.0</version>
+		</dependency>
+
 <!--		&lt;!&ndash; Spring AI OpenAI Starter (兼容DeepSeek) &ndash;&gt;-->
 <!--		<dependency>-->
 <!--			<groupId>org.springframework.ai</groupId>-->
