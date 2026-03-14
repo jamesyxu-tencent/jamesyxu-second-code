@@ -1,9 +1,9 @@
-package org.example.controller;
+package com.example.controller;
 
 import jakarta.annotation.Resource;
-import org.example.dto.CrispeRequestDTO;
-import org.example.service.IChatService;
-import org.example.vo.base.ApiResult;
+import com.example.dto.CrispeRequestDTO;
+import com.example.service.IChatService;
+import com.example.vo.base.ApiResult;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

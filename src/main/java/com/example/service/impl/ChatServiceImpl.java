@@ -1,12 +1,12 @@
-package org.example.service.impl;
+package com.example.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
-import org.example.config.ChatAiConfig;
-import org.example.dto.CrispeRequestDTO;
-import org.example.service.IChatService;
+import com.example.config.ChatAiConfig;
+import com.example.dto.CrispeRequestDTO;
+import com.example.service.IChatService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

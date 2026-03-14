@@ -1,6 +1,6 @@
-package org.example.service;
+package com.example.service;
 
-import org.example.dto.CrispeRequestDTO;
+import com.example.dto.CrispeRequestDTO;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Map;

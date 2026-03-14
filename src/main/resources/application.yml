@@ -1,6 +1,19 @@
 spring:
   application:
     name: jamesyxu-second-code
+  datasource:
+    url: jdbc:mysql://localhost:3306/xy_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: admin
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # HikariCP连接池配置（Spring Boot 3.x默认使用HikariCP）
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
 #  ai:
 #    openai:
 #      api-key: sk-94027d471dfe42a1ad0449a1a5fe7f3e
@@ -16,3 +29,38 @@ chat:
 
 server:
   port: 8080
+
+# MyBatis-Plus配置
+mybatis-plus:
+  # 实体类扫描包路径
+  type-aliases-package: com.example.entity
+  # Mapper XML文件位置（如果有自定义XML）
+  mapper-locations: classpath:mapper/*.xml
+  # 全局配置
+  global-config:
+    banner: false # 关闭MyBatis-Plus启动banner
+    db-config:
+      # 主键类型：AUTO-数据库自增，ASSIGN_ID-雪花算法，ASSIGN_UUID-UUID
+      id-type: AUTO
+      # 表名下划线转驼峰（默认true）
+      table-underline: true
+      # 字段验证策略
+      insert-strategy: NOT_NULL
+      update-strategy: NOT_NULL
+      where-strategy: NOT_NULL
+      # 逻辑删除字段名
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  # 原生MyBatis配置
+  configuration:
+    # 开启驼峰命名自动映射
+    map-underscore-to-camel-case: true
+    # 开启日志打印（开发环境用）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 开启缓存
+    cache-enabled: false
+    # 延迟加载
+    lazy-loading-enabled: false
+    #  aggressive-lazy-loading已被移除，使用lazy-load-trigger-methods代替
+    lazy-load-trigger-methods: equals,clone,hashCode,toString

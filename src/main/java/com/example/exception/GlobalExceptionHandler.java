@@ -1,6 +1,6 @@
-package org.example.exception;
+package com.example.exception;
 
-import org.example.vo.base.ApiResult;
+import com.example.vo.base.ApiResult;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 

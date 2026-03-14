@@ -1,4 +1,4 @@
-package org.example.vo.base;
+package com.example.vo.base;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
