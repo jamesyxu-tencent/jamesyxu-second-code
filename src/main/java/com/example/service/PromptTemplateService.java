@@ -81,4 +81,18 @@ public interface PromptTemplateService extends IService<PromptTemplate> {
      * @return 是否唯一
      */
     boolean checkNameUnique(String name, Long excludeId);
+
+    /**
+     * 使用模板生成回答
+     *
+     * @param templateName 模板名称
+     * @param params       参数映射，用于替换模板中的占位符
+     */
+    String generateWithTemplate(String templateName,
+                                Map<String, Object> params);
+
+    /**
+     * 初始化一些常用模板
+     */
+    void initDefaultTemplates();
 }

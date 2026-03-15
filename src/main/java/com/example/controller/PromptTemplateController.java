@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.entity.PromptTemplate;
 import com.example.service.PromptTemplateService;
+import com.example.vo.base.ApiResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,23 +18,30 @@ public class PromptTemplateController {
     private PromptTemplateService promptTemplateService;
 
     @GetMapping("/render")
-    public String renderTemplate(@RequestParam String name,
-                                 @RequestParam Map<String, String> placeholders) {
-        return promptTemplateService.getContentWithPlaceholders(name, placeholders);
+    public ApiResult<String> renderTemplate(@RequestParam String name,
+                                           @RequestParam Map<String, String> placeholders) {
+        return ApiResult.success(promptTemplateService.getContentWithPlaceholders(name, placeholders));
     }
 
     @PostMapping("/copy")
-    public PromptTemplate copyTemplate(@RequestParam Long id, @RequestParam String newName) {
-        return promptTemplateService.copyTemplate(id, newName);
+    public ApiResult<PromptTemplate> copyTemplate(@RequestParam Long id, @RequestParam String newName) {
+        return ApiResult.success(promptTemplateService.copyTemplate(id, newName));
     }
 
     @GetMapping("/page")
-    public IPage<PromptTemplate> page(@RequestParam(defaultValue = "1") int current,
+    public ApiResult<IPage<PromptTemplate>> page(@RequestParam(defaultValue = "1") int current,
                                       @RequestParam(defaultValue = "10") int size,
                                       @RequestParam(required = false) String keyword,
                                       @RequestParam(required = false) String category,
                                       @RequestParam(required = false) String isActive) {
         Page<PromptTemplate> page = new Page<>(current, size);
-        return promptTemplateService.queryPage(page, keyword, category, isActive);
+        return ApiResult.success(promptTemplateService.queryPage(page, keyword, category, isActive));
     }
+
+    @PostMapping("/initDefaultTemplates")
+    public ApiResult initDefaultTemplates() {
+        promptTemplateService.initDefaultTemplates();
+        return ApiResult.success();
+    }
+
 }
