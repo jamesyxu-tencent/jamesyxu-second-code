@@ -1,4 +1,10 @@
 spring:
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: qwen3:8b  # 本地运行，完全免费
   application:
     name: jamesyxu-second-code
   datasource:

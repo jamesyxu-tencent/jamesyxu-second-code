@@ -3,6 +3,7 @@ package com.example.controller;
 import jakarta.annotation.Resource;
 import com.example.service.IChatService;
 import com.example.vo.base.ApiResult;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,6 +17,20 @@ public class AiHelloWorldController {
 
     @Resource
     private IChatService chatService;
+
+    private final ChatClient chatClient;
+
+    public AiHelloWorldController(ChatClient.Builder builder) {
+        this.chatClient = builder.build();
+    }
+
+    @GetMapping("api/free-test")
+    public String test() {
+        return chatClient.prompt()
+                .user("你好，Spring AI 要钱吗？")
+                .call()
+                .content();
+    }
 
     @GetMapping("/api/hello")
     public ApiResult<String> showHelloPage() {
