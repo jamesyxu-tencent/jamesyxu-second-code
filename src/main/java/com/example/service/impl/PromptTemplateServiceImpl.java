@@ -187,7 +187,7 @@ public class PromptTemplateServiceImpl extends ServiceImpl<PromptTemplateMapper,
         log.info("systemPrompt: {}", systemPrompt);
 
         // 使用AiService中的方法（需要稍后添加一个接受systemPrompt的方法）
-        return chatService.chat(systemPrompt);
+        return chatService.chat(systemPrompt, null);
     }
 
     @Override

@@ -87,7 +87,7 @@ public class OutputParserServiceImpl implements IOutputParserService {
         String prompt = systemPrompt + "\n\n输入文本：\n" + input;
 
         // 调用AI
-        String response = chatService.chat(prompt);
+        String response = chatService.chat(prompt, null);
 
         // 解析JSON为Java对象
         try {
@@ -106,7 +106,7 @@ public class OutputParserServiceImpl implements IOutputParserService {
             throws IOException, InterruptedException {
 
         String systemPrompt = instruction + "\n\n请返回JSON格式的数据。";
-        String response = chatService.chat(systemPrompt + "\n\n" + input);
+        String response = chatService.chat(systemPrompt + "\n\n" + input, null);
 
         try {
             return objectMapper.readValue(response, new TypeReference<Map<String, Object>>() {});
@@ -123,7 +123,7 @@ public class OutputParserServiceImpl implements IOutputParserService {
             throws IOException, InterruptedException {
 
         String systemPrompt = instruction + "\n\n请返回JSON数组格式，如：[\"item1\", \"item2\"]";
-        String response = chatService.chat(systemPrompt + "\n\n" + input);
+        String response = chatService.chat(systemPrompt + "\n\n" + input, null);
 
         try {
             return objectMapper.readValue(response, new TypeReference<List<String>>() {});

@@ -13,4 +13,6 @@ public class ChatAiConfig {
 
     private String chatUrl;
 
+    private String defaultModel = "qwen-turbo";
+
 }

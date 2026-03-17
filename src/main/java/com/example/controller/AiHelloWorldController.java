@@ -25,11 +25,11 @@ public class AiHelloWorldController {
     }
 
     @GetMapping("api/free-test")
-    public String test() {
-        return chatClient.prompt()
+    public ApiResult<String> test() {
+        return ApiResult.success(chatClient.prompt()
                 .user("你好，Spring AI 要钱吗？")
                 .call()
-                .content();
+                .content());
     }
 
     @GetMapping("/api/hello")
@@ -38,8 +38,9 @@ public class AiHelloWorldController {
     }
 
     @GetMapping("/api/sayHello")
-    public ApiResult<String> sayHello(@RequestParam(value = "question", defaultValue = "今天天气怎么样？") String question) {
-        String result = chatService.chat(question);
+    public ApiResult<String> sayHello(@RequestParam(value = "question", defaultValue = "今天天气怎么样？") String question,
+                                      @RequestParam(value = "model", defaultValue = "qwen-turbo") String model) {
+        String result = chatService.chat(question, model);
         return ApiResult.success(result);
     }
 

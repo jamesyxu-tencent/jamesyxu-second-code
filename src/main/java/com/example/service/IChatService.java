@@ -14,9 +14,10 @@ public interface IChatService {
      * 处理同步聊天请求
      *
      * @param prompt
+     * @param model
      * @return
      */
-    String chat(String prompt);
+    String chat(String prompt, String model);
 
     /**
      * 处理流式聊天请求

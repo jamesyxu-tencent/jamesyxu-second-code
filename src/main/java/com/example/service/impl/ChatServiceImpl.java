@@ -34,12 +34,12 @@ public class ChatServiceImpl implements IChatService {
     private ChatAiConfig chatAiConfig;
 
     @Override
-    public String chat(String prompt) {
+    public String chat(String prompt, String model) {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", "qwen-turbo");
+            requestBody.put("model", model == null ? chatAiConfig.getDefaultModel() : model);
             requestBody.put("stream", false);
             requestBody.put("messages", new Object[]{
                     Map.of("role", "user", "content", prompt)
@@ -159,14 +159,14 @@ public class ChatServiceImpl implements IChatService {
                 2. 使用该角色的语气和表达方式
                 3. 如果问题超出专业范围，礼貌说明并建议咨询专业人士
                 """, role, question);
-        return this.chat(systemPrompt);
+        return this.chat(systemPrompt, null);
     }
 
     @Override
     public String chatWithCrispe(CrispeRequestDTO dto) {
         // 构建系统提示词模板
         String systemPrompt = askWithCRISPE(dto);
-        return this.chat(systemPrompt);
+        return this.chat(systemPrompt, null);
     }
 
     /**

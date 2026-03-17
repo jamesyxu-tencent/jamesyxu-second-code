@@ -32,6 +32,22 @@ spring:
 chat:
   api-key: sk-4d565a8750e94b9abf0f525ed530ddad
   chat-url: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+  defaultModel: qwen-turbo
+
+# 阿里云DashScope配置
+#  dashscope:
+#    default:
+#      model: qwen-turbo
+#    api:
+#      key: sk-4d565a8750e94b9abf0f525ed530ddad
+#    qwen-turbo:
+#      url: https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation
+#      temperature: 0.7
+#      max-tokens: 2000
+#    qwen-plus:
+#      url: https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation
+#      temperature: 0.8
+#      max-tokens: 3000
 
 server:
   port: 8080
