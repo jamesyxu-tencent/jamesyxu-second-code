@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ollama 流式输出测试</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
+        #response {
+            border: 1px solid #ddd;
+            min-height: 200px;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            background: #f9f9f9;
+            white-space: pre-wrap;
+        }
+        input, button { padding: 8px; font-size: 16px; margin: 5px; }
+        #status { color: #666; }
+    </style>
+</head>
+<body>
+<h2>Ollama 流式输出测试</h2>
+<p>体验打字机效果</p>
+
+<input type="text" id="message" size="50" placeholder="输入你的问题" value="讲一个程序员笑话">
+<button onclick="sendStream()">发送</button>
+
+<div>
+    <input type="checkbox" id="useSystem"> 使用系统提示词
+    <input type="text" id="systemPrompt" placeholder="系统提示词" value="你是一个幽默的程序员" disabled>
+</div>
+
+<div id="status">就绪</div>
+<div id="response"></div>
+
+<script>
+    const systemCheck = document.getElementById('useSystem');
+    const systemInput = document.getElementById('systemPrompt');
+
+    systemCheck.addEventListener('change', function() {
+        systemInput.disabled = !this.checked;
+    });
+
+    function sendStream() {
+        const msg = document.getElementById('message').value;
+        const useSystem = systemCheck.checked;
+        const system = systemInput.value;
+
+        document.getElementById('response').innerHTML = '';
+        document.getElementById('status').innerHTML = '正在生成...';
+
+        let url = useSystem
+            ? `/ollama/stream/system?msg=${encodeURIComponent(msg)}&system=${encodeURIComponent(system)}`
+            : `/ollama/stream/chat?msg=${encodeURIComponent(msg)}`;
+
+        const eventSource = new EventSource(url);
+
+        eventSource.onmessage = function(event) {
+            document.getElementById('response').innerHTML += event.data;
+            document.getElementById('status').innerHTML = '生成中...';
+        };
+
+        eventSource.onerror = function() {
+            document.getElementById('status').innerHTML = '完成';
+            eventSource.close();
+        };
+    }
+</script>
+</body>
+</html>

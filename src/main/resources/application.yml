@@ -4,7 +4,16 @@ spring:
       base-url: http://localhost:11434
       chat:
         options:
-          model: qwen3:8b  # 本地运行，完全免费
+          model: qwen2.5:7b-instruct
+#          temperature: 0.7
+#          top-p: 0.9
+#          num-predict: 2048
+#          num-ctx: 4096
+#      init:
+#        pull-model-strategy: when_missing
+#        timeout: 5m
+#      embedding:
+#        enabled: false  # 如果不需要嵌入模型
   application:
     name: jamesyxu-second-code
   datasource:
@@ -19,6 +28,9 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
+
+app:
+  model: qwen
 
 #  ai:
 #    openai:

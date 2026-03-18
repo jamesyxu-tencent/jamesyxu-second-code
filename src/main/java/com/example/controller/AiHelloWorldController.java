@@ -4,6 +4,7 @@ import jakarta.annotation.Resource;
 import com.example.service.IChatService;
 import com.example.vo.base.ApiResult;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,11 +19,8 @@ public class AiHelloWorldController {
     @Resource
     private IChatService chatService;
 
-    private final ChatClient chatClient;
-
-    public AiHelloWorldController(ChatClient.Builder builder) {
-        this.chatClient = builder.build();
-    }
+    @Autowired
+    private ChatClient chatClient;
 
     @GetMapping("api/free-test")
     public ApiResult<String> test() {
