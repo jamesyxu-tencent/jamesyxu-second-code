@@ -44,7 +44,7 @@ public class LocalCloudCompareController {
             localResult.put("success", true);
             localResult.put("answer", localAnswer);
             localResult.put("time_ms", localTime);
-            localResult.put("model", "qwen2.5:7b (本地)");
+            localResult.put("model", "qwen2.5:7b-instruct (本地)");
 
         } catch (Exception e) {
             localResult.put("success", false);

@@ -2,18 +2,20 @@ spring:
   ai:
     ollama:
       base-url: http://localhost:11434
-      chat:
-        options:
-          model: qwen2.5:7b-instruct
-#          temperature: 0.7
-#          top-p: 0.9
-#          num-predict: 2048
-#          num-ctx: 4096
-#      init:
-#        pull-model-strategy: when_missing
-#        timeout: 5m
+#      # 修正后的完整配置示例（适配Ollama）
+#      chat:
+#        options:
+#          model: qwen2.5:7b-instruct  # 指定使用的模型
+#          temperature: 0.7             # 随机性，0-1，值越高越随机
+#          top_p: 0.9                   # 采样阈值，控制输出多样性
+#          num_predict: 2048            # 注意：Ollama中是下划线，不是短横线！
+#          num_ctx: 4096                # 上下文窗口大小
+#        init:
+#          pull_model_strategy: when_missing  # 同样：下划线，不是短横线！
+#          timeout: 5m                   # 拉取模型超时时间
 #      embedding:
-#        enabled: false  # 如果不需要嵌入模型
+#        enabled: false                  # 关闭嵌入模型（语法正确）
+
   application:
     name: jamesyxu-second-code
   datasource:

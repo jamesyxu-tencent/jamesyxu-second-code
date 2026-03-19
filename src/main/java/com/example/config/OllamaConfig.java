@@ -9,6 +9,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OllamaConfig {
 
+//    @Bean
+//    public ChatClient chatClient(ChatClient.Builder builder) {
+//        return builder.build();  // 使用默认配置
+//    }
+
     @Bean
     @ConditionalOnProperty(name = "app.model", havingValue = "ollama")
     public ChatClient ollamaChatClient(ChatClient.Builder builder) {
