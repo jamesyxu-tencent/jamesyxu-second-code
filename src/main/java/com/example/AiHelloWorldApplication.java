@@ -4,7 +4,9 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication(
+        exclude = org.springframework.ai.autoconfigure.chat.client.ChatClientAutoConfiguration.class
+)
 @MapperScan("com.example.mapper")
 public class AiHelloWorldApplication {
 

@@ -1,21 +1,4 @@
 spring:
-  ai:
-    ollama:
-      base-url: http://localhost:11434
-#      # 修正后的完整配置示例（适配Ollama）
-#      chat:
-#        options:
-#          model: qwen2.5:7b-instruct  # 指定使用的模型
-#          temperature: 0.7             # 随机性，0-1，值越高越随机
-#          top_p: 0.9                   # 采样阈值，控制输出多样性
-#          num_predict: 2048            # 注意：Ollama中是下划线，不是短横线！
-#          num_ctx: 4096                # 上下文窗口大小
-#        init:
-#          pull_model_strategy: when_missing  # 同样：下划线，不是短横线！
-#          timeout: 5m                   # 拉取模型超时时间
-#      embedding:
-#        enabled: false                  # 关闭嵌入模型（语法正确）
-
   application:
     name: jamesyxu-second-code
   datasource:
@@ -30,6 +13,38 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
+  ai:
+    default-model: cloud
+    openai:
+      # 通义千问的 OpenAI 兼容接口地址
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      # 您的 DashScope API Key
+      api-key: sk-4d565a8750e94b9abf0f525ed530ddad
+      chat:
+        options:
+          # 使用的模型：qwen-turbo（快速）或 qwen-plus（高质量）
+          model: qwen-turbo
+          # 温度：控制随机性，0-1之间，越高越随机
+          temperature: 0.7
+          # 最大输出 token 数
+          max-tokens: 2000
+          # Top-p 采样
+          top-p: 0.9
+    ollama:
+      base-url: http://localhost:11434
+      # 修正后的完整配置示例（适配Ollama）
+      chat:
+        options:
+          model: qwen2.5:1.5b-instruct  # 指定使用的模型
+          temperature: 0.7             # 随机性，0-1，值越高越随机
+          top_p: 0.9                   # 采样阈值，控制输出多样性
+          num_predict: 2048            # 注意：Ollama中是下划线，不是短横线！
+          num_ctx: 4096                # 上下文窗口大小
+        init:
+          pull_model_strategy: when_missing  # 同样：下划线，不是短横线！
+          timeout: 5m                   # 拉取模型超时时间
+      embedding:
+        enabled: false                  # 关闭嵌入模型（语法正确）
 
 app:
   model: qwen

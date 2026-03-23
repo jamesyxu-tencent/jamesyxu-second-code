@@ -3,6 +3,7 @@ package com.example.controller;
 import com.example.service.IChatService;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,7 +17,8 @@ import java.util.Map;
 public class LocalCloudCompareController {
 
     @Autowired
-    private ChatClient chatClient;  // 本地模型
+    @Qualifier("localChatClient")
+    private ChatClient localChatClient;  // 本地模型
 
     @Autowired
     private IChatService chatService;  // 云端模型（Day 5）
@@ -35,7 +37,7 @@ public class LocalCloudCompareController {
         try {
             // 测试本地模型
             long localStart = System.currentTimeMillis();
-            String localAnswer = chatClient.prompt()
+            String localAnswer = localChatClient.prompt()
                     .user(question)
                     .call()
                     .content();
@@ -44,7 +46,7 @@ public class LocalCloudCompareController {
             localResult.put("success", true);
             localResult.put("answer", localAnswer);
             localResult.put("time_ms", localTime);
-            localResult.put("model", "qwen2.5:7b-instruct (本地)");
+            localResult.put("model", "qwen2.5:1.5b-instruct (本地)");
 
         } catch (Exception e) {
             localResult.put("success", false);

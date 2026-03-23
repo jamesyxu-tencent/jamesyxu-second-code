@@ -5,6 +5,7 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -15,7 +16,8 @@ import java.util.Map;
 public class OllamaMemoryController {
 
     @Autowired
-    private ChatClient chatClient;
+    @Qualifier("localChatClient")
+    private ChatClient localChatClient;  // 本地模型
 
     // 内存存储（生产环境可用Redis）
     private final ChatMemory chatMemory = new InMemoryChatMemory();
@@ -31,7 +33,7 @@ public class OllamaMemoryController {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            String response = chatClient.prompt()
+            String response = localChatClient.prompt()
                     .system("你是一个友好的AI助手，记住对话历史，保持上下文连贯")
                     .user(message)
                     .advisors(new MessageChatMemoryAdvisor(chatMemory, sessionId, 10)) // 保留最近10条

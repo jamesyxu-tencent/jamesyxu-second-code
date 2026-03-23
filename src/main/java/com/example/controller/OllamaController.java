@@ -2,6 +2,7 @@ package com.example.controller;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -12,7 +13,8 @@ import java.util.Map;
 public class OllamaController {
 
     @Autowired
-    private ChatClient chatClient;
+    @Qualifier("localChatClient")
+    private ChatClient localChatClient;  // 本地模型
 
     /**
      * 基础问答
@@ -25,7 +27,7 @@ public class OllamaController {
         try {
             long startTime = System.currentTimeMillis();
 
-            String response = chatClient.prompt()
+            String response = localChatClient.prompt()
                     .user(message)
                     .call()
                     .content();
@@ -36,7 +38,7 @@ public class OllamaController {
             result.put("message", message);
             result.put("response", response);
             result.put("duration_ms", duration);
-            result.put("model", "qwen2.5:7b-instruct (本地)");
+            result.put("model", "qwen2.5:1.5b-instruct (本地)");
 
         } catch (Exception e) {
             result.put("success", false);
@@ -59,7 +61,7 @@ public class OllamaController {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            String response = chatClient.prompt()
+            String response = localChatClient.prompt()
                     .system(systemPrompt)
                     .user(userMessage)
                     .call()
