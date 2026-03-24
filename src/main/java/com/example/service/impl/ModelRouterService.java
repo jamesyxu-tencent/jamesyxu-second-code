@@ -23,6 +23,10 @@ public class ModelRouterService {
 
     /**
      * 初始化路由规则
+     * 隐私 / 离线 → Ollama
+     * 简单问题 / 短文本 → Ollama
+     * 普通问答 → qwen-turbo
+     * 复杂推理 / 长文本 / 代码 → qwen-plus
      */
     private void initRoutingRules() {
         // 高质量任务 -> 使用 qwen-plus
@@ -48,6 +52,14 @@ public class ModelRouterService {
                 "qwen-plus",
                 1,
                 "长文本处理使用qwen-plus"
+        ));
+
+        routingRules.add(new RoutingRule(
+                "长问题",
+                "^.{100,}$",  // 100字以上的问题
+                "qwen-plus",
+                1,
+                "长问题使用qwen-plus"
         ));
 
         // 简单任务 -> 使用 qwen-turbo（快速）
@@ -76,12 +88,49 @@ public class ModelRouterService {
                 "短问题使用qwen-turbo"
         ));
 
+        // 隐私/敏感数据 → 本地 Ollama（不上云，最安全）
         routingRules.add(new RoutingRule(
-                "长问题",
-                "^.{100,}$",  // 100字以上的问题
-                "qwen-plus",
-                3,
-                "长问题使用qwen-plus"
+                "隐私数据",
+                "身份证|手机号|密码|公司机密|内网|地址|邮箱|私人|保密|不公开|本地",
+                "ollama",
+                1,
+                "隐私敏感内容强制使用本地Ollama，不上传到云端"
+        ));
+
+        // 简单编程/本地调试 → Ollama
+        routingRules.add(new RoutingRule(
+                "本地代码",
+                "本地运行|简单代码|小脚本|语法检查|本地调试|测试代码",
+                "ollama",
+                2,
+                "简单代码任务使用本地Ollama"
+        ));
+
+        // 日常闲聊/轻量级问答 → Ollama（节省云端费用）
+        routingRules.add(new RoutingRule(
+                "轻量问答",
+                "在吗|你好|谢谢|再见|早上好|晚上好|简单介绍|常识",
+                "ollama",
+                2,
+                "轻量级问答使用本地Ollama"
+        ));
+
+        // 无网络/离线需求 → Ollama
+        routingRules.add(new RoutingRule(
+                "离线可用",
+                "离线|断网|无网络|内网|局域网|不联网",
+                "ollama",
+                1,
+                "离线/内网环境强制使用本地Ollama"
+        ));
+
+        // 短文本、快速问答 → Ollama（速度快、免费）
+        routingRules.add(new RoutingRule(
+                "超短问答",
+                "^.{0,15}$",
+                "ollama",
+                1,
+                "15字内超短问题使用本地Ollama"
         ));
     }
 

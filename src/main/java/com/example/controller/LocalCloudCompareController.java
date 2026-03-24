@@ -17,8 +17,8 @@ import java.util.Map;
 public class LocalCloudCompareController {
 
     @Autowired
-    @Qualifier("localChatClient")
-    private ChatClient localChatClient;  // 本地模型
+    @Qualifier("ollamaChatClient")
+    private ChatClient ollamaChatClient;  // 本地模型
 
     @Autowired
     private IChatService chatService;  // 云端模型（Day 5）
@@ -37,7 +37,7 @@ public class LocalCloudCompareController {
         try {
             // 测试本地模型
             long localStart = System.currentTimeMillis();
-            String localAnswer = localChatClient.prompt()
+            String localAnswer = ollamaChatClient.prompt()
                     .user(question)
                     .call()
                     .content();

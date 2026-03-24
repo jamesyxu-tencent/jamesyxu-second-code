@@ -13,8 +13,8 @@ import java.util.Map;
 public class OllamaController {
 
     @Autowired
-    @Qualifier("localChatClient")
-    private ChatClient localChatClient;  // 本地模型
+    @Qualifier("ollamaChatClient")
+    private ChatClient ollamaChatClient;  // 本地模型
 
     /**
      * 基础问答
@@ -27,7 +27,7 @@ public class OllamaController {
         try {
             long startTime = System.currentTimeMillis();
 
-            String response = localChatClient.prompt()
+            String response = ollamaChatClient.prompt()
                     .user(message)
                     .call()
                     .content();
@@ -61,7 +61,7 @@ public class OllamaController {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            String response = localChatClient.prompt()
+            String response = ollamaChatClient.prompt()
                     .system(systemPrompt)
                     .user(userMessage)
                     .call()

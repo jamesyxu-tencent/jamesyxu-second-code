@@ -3,6 +3,8 @@ package com.example.config;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -16,13 +18,20 @@ public class ChatClientConfig {
     @Value("${spring.ai.default-model:cloud}") // 默认使用云端
     private String defaultModel;
 
+    // 通义千问基础配置
+    @Value("${spring.ai.openai.base-url}")
+    private String baseUrl;
+
+    @Value("${spring.ai.openai.api-key}")
+    private String apiKey;
+
     /**
      * 本地Ollama的ChatClient
      * @param ollamaChatModel Spring AI自动装配的Ollama模型实例
      * @return 本地ChatClient
      */
-    @Bean("localChatClient") // 命名为localChatClient，方便注入
-    public ChatClient localChatClient(OllamaChatModel ollamaChatModel) {
+    @Bean("ollamaChatClient") // 命名为localChatClient，方便注入
+    public ChatClient ollamaChatClient(OllamaChatModel ollamaChatModel) {
         return ChatClient.builder(ollamaChatModel).build();
     }
 
@@ -31,10 +40,22 @@ public class ChatClientConfig {
      * @param openAiChatModel Spring AI自动装配的OpenAI模型实例
      * @return 云端ChatClient
      */
-    @Bean("cloudChatClient") // 命名为cloudChatClient，方便注入
+    @Bean("qwenTurboChatClient") // 命名为qwenTurboChatClient，方便注入
     @Primary // 可选：标记默认优先使用的ChatClient（如果业务代码不指定@Qualifier时）
-    public ChatClient cloudChatClient(OpenAiChatModel openAiChatModel) {
+    public ChatClient qwenTurboChatClient(OpenAiChatModel openAiChatModel) {
         return ChatClient.builder(openAiChatModel).build();
+    }
+
+    @Bean("qwenPlusChatClient")
+    public ChatClient qwenPlusChatClient() {
+        OpenAiApi openAiApi = new OpenAiApi(baseUrl, apiKey);
+        OpenAiChatModel chatModel = new OpenAiChatModel(openAiApi, OpenAiChatOptions.builder()
+                .model("qwen-plus")  // 关键：这里换成 plus
+                .temperature(0.7)
+                .maxTokens(2000)
+                .topP(0.9)
+                .build());
+        return ChatClient.create(chatModel);
     }
 
     /**
@@ -43,9 +64,9 @@ public class ChatClientConfig {
     @Bean
     @Primary
     public ChatClient defaultChatClient(
-            @Qualifier("localChatClient") ChatClient localChatClient,
-            @Qualifier("cloudChatClient") ChatClient cloudChatClient) {
-        return "local".equals(defaultModel) ? localChatClient : cloudChatClient;
+            @Qualifier("ollamaChatClient") ChatClient ollamaChatClient,
+            @Qualifier("qwenTurboChatClient") ChatClient qwenTurboChatClient) {
+        return "local".equals(defaultModel) ? ollamaChatClient : qwenTurboChatClient;
     }
 
 }

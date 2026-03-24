@@ -12,8 +12,8 @@ import reactor.core.publisher.Flux;
 public class OllamaStreamController {
 
     @Autowired
-    @Qualifier("localChatClient")
-    private ChatClient localChatClient;  // 本地模型
+    @Qualifier("ollamaChatClient")
+    private ChatClient ollamaChatClient;  // 本地模型
 
     /**
      * 流式输出
@@ -22,7 +22,7 @@ public class OllamaStreamController {
      */
     @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> streamChat(@RequestParam("msg") String message) {
-        return localChatClient.prompt()
+        return ollamaChatClient.prompt()
                 .user(message)
                 .stream()
                 .content();
@@ -35,7 +35,7 @@ public class OllamaStreamController {
     public Flux<String> streamWithSystem(
             @RequestParam String msg,
             @RequestParam(required = false, defaultValue = "你是一个幽默的程序员") String system) {
-        return localChatClient.prompt()
+        return ollamaChatClient.prompt()
                 .system(system)
                 .user(msg)
                 .stream()

@@ -5,6 +5,7 @@ import com.example.entity.ChatMessage;
 import com.example.entity.ChatSession;
 import com.example.mapper.ChatMessageMapper;
 import com.example.mapper.ChatSessionMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,16 +15,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Slf4j
 @Service
 @Transactional
 public class ChatRoomService {
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     // 模型类型常量
     public static final String MODEL_QWEN_TURBO = "qwen-turbo";
@@ -40,12 +39,16 @@ public class ChatRoomService {
     private ModelRouterService routerService;
 
     @Autowired
-    @Qualifier("localChatClient")
-    private ChatClient localChatClient;
+    @Qualifier("ollamaChatClient")
+    private ChatClient ollamaChatClient;
 
     @Autowired
-    @Qualifier("cloudChatClient")
-    private ChatClient cloudChatClient;
+    @Qualifier("qwenTurboChatClient")
+    private ChatClient qwenTurboChatClient;
+
+    @Autowired
+    @Qualifier("qwenPlusChatClient")
+    private ChatClient qwenPlusChatClient;
 
 //    // 注入本地Ollama的ChatClient
 //    private final ChatClient localChatClient;
@@ -227,9 +230,16 @@ public class ChatRoomService {
 
         // 获取最近5条消息作为上下文
         List<ChatMessage> recentMessages = messageMapper.selectRecentMessages(sessionId, 5);
-        String context = recentMessages.stream()
-                .map(msg -> msg.getRole() + ": " + msg.getContent())
-                .collect(Collectors.joining("\n"));
+        List<Map<String, String>> conversationHistory =  recentMessages.stream()
+                .map(msg -> Map.of("role", msg.getRole(), "content", msg.getContent()))
+                .toList();
+
+        String context = "";
+        try {
+            context = objectMapper.writeValueAsString(conversationHistory);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return client.prompt()
                 .system("你是一个AI助手，请基于对话历史回答问题。\n历史对话：\n" + context)
@@ -271,9 +281,12 @@ public class ChatRoomService {
      */
     private ChatClient getChatClient(String modelType) {
         if (modelType.equals(MODEL_OLLAMA)) {
-            return localChatClient;
+            return ollamaChatClient;
+        } else if (modelType.equals(MODEL_QWEN_TURBO)) {
+            return qwenTurboChatClient;
+        } else {
+            return qwenPlusChatClient;
         }
-        return cloudChatClient;
     }
 
     // ==================== 统计与导出 ====================
