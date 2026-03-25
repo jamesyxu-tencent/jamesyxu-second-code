@@ -50,18 +50,6 @@ public class ChatRoomService {
     @Qualifier("qwenPlusChatClient")
     private ChatClient qwenPlusChatClient;
 
-//    // 注入本地Ollama的ChatClient
-//    private final ChatClient localChatClient;
-//    // 注入云端OpenAI的ChatClient
-//    private final ChatClient cloudChatClient;
-//
-//    // 构造器注入，通过@Qualifier指定Bean名称
-//    public ChatRoomService(@Qualifier("localChatClient") ChatClient localChatClient,
-//            @Qualifier("cloudChatClient") ChatClient cloudChatClient) {
-//        this.localChatClient = localChatClient;
-//        this.cloudChatClient = cloudChatClient;
-//    }
-
     // ==================== 会话管理 ====================
 
     /**
@@ -139,30 +127,23 @@ public class ChatRoomService {
 
         // 选择模型并调用
         long startTime = System.currentTimeMillis();
-        String answer;
         String usedModel = null;
 
         try {
             if (MODEL_AUTO.equals(modelType)) {
                 usedModel = routerService.routeModel(content);
-                answer = callModel(usedModel, content, sessionId);
             } else {
                 usedModel = modelType;
-                answer = callModel(modelType, content, sessionId);
             }
 
             long duration = System.currentTimeMillis() - startTime;
+
+            String answer = callModel(usedModel, content, sessionId);
 
             // 保存AI回答
             ChatMessage assistantMessage = new ChatMessage(sessionId, answer, usedModel, (int) duration);
             messageMapper.insert(assistantMessage);
 
-            // 更新会话信息
-            if (session.getMessages() == null || session.getMessages().isEmpty()) {
-                // 第一条消息，用内容作为会话名称
-                String shortName = content.length() > 20 ? content.substring(0, 20) + "..." : content;
-                session.setName(shortName);
-            }
             session.setModelType(modelType);
             session.setLastMessageTime(LocalDateTime.now());
             sessionMapper.updateById(session);
@@ -228,8 +209,24 @@ public class ChatRoomService {
     private String callModel(String modelType, String content, String sessionId) {
         ChatClient client = getChatClient(modelType);
 
-        // 获取最近5条消息作为上下文
-        List<ChatMessage> recentMessages = messageMapper.selectRecentMessages(sessionId, 5);
+        // 获取最近10条消息作为上下文
+        String context = getContext(sessionId);
+
+        return client.prompt()
+                .system("你是一个AI助手，请基于对话历史回答问题。\n历史对话：\n" + context)
+                .user(content)
+                .call()
+                .content();
+    }
+
+    /**
+     * 获取最近10条消息作为上下文
+     *
+     * @param sessionId
+     * @return
+     */
+    private String getContext(String sessionId) {
+        List<ChatMessage> recentMessages = messageMapper.selectRecentMessages(sessionId, 10);
         List<Map<String, String>> conversationHistory =  recentMessages.stream()
                 .map(msg -> Map.of("role", msg.getRole(), "content", msg.getContent()))
                 .toList();
@@ -240,12 +237,7 @@ public class ChatRoomService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        return client.prompt()
-                .system("你是一个AI助手，请基于对话历史回答问题。\n历史对话：\n" + context)
-                .user(content)
-                .call()
-                .content();
+        return context;
     }
 
     /**
@@ -359,5 +351,187 @@ public class ChatRoomService {
         }
 
         return sb.toString();
+    }
+
+    // ==================== 新增：消息操作功能 ====================
+
+    /**
+     * 删除单条消息
+     * 如果删除的是用户消息，同时删除对应的AI回复
+     * 如果删除的是AI消息，只删除自己
+     */
+    @Transactional
+    public void deleteMessage(Long messageId) {
+        ChatMessage message = messageMapper.selectById(messageId);
+        if (message == null) {
+            log.warn("消息不存在: {}", messageId);
+            return;
+        }
+
+        String sessionId = message.getSessionId();
+
+        if ("user".equals(message.getRole())) {
+            // 删除用户消息及其对应的AI回复
+            // 查找该用户消息之后的AI回复（最近的一条）
+            LambdaQueryWrapper<ChatMessage> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(ChatMessage::getSessionId, sessionId)
+                    .eq(ChatMessage::getRole, "assistant")
+                    .gt(ChatMessage::getCreateTime, message.getCreateTime())
+                    .orderByAsc(ChatMessage::getCreateTime)
+                    .last("LIMIT 1");
+
+            ChatMessage aiResponse = messageMapper.selectOne(wrapper);
+            if (aiResponse != null) {
+                messageMapper.deleteById(aiResponse.getId());
+                log.info("删除AI回复: {}", aiResponse.getId());
+            }
+
+            // 删除用户消息
+            messageMapper.deleteById(messageId);
+            log.info("删除用户消息: {}", messageId);
+
+        } else {
+            // 删除AI消息（只删除自己）
+            messageMapper.deleteById(messageId);
+            log.info("删除AI消息: {}", messageId);
+        }
+
+        // 更新会话的最后消息时间
+        updateSessionLastMessageTime(sessionId);
+    }
+
+    /**
+     * 编辑用户消息并重新生成AI回答
+     */
+    @Transactional
+    public ChatMessage editMessageAndRegenerate(Long messageId, String newContent, String modelType) {
+        // 1. 获取原消息
+        ChatMessage originalMessage = messageMapper.selectById(messageId);
+        if (originalMessage == null || !"user".equals(originalMessage.getRole())) {
+            throw new RuntimeException("只能编辑用户消息");
+        }
+
+        String sessionId = originalMessage.getSessionId();
+
+        // 2. 删除该消息之后的所有AI回复
+        LambdaQueryWrapper<ChatMessage> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ChatMessage::getSessionId, sessionId)
+                .eq(ChatMessage::getRole, "assistant")
+                .gt(ChatMessage::getCreateTime, originalMessage.getCreateTime());
+        List<ChatMessage> aiMessages = messageMapper.selectList(wrapper);
+        for (ChatMessage aiMsg : aiMessages) {
+            messageMapper.deleteById(aiMsg.getId());
+        }
+        log.info("删除了 {} 条后续AI回复", aiMessages.size());
+
+        // 3. 更新用户消息内容
+        originalMessage.setContent(newContent);
+        originalMessage.setCreateTime(LocalDateTime.now());  // 更新时间
+        messageMapper.updateById(originalMessage);
+
+        // 4. 重新生成AI回答
+        String usedModel;
+        if ("auto".equals(modelType)) {
+            usedModel = routerService.routeModel(newContent);
+        } else {
+            usedModel = modelType;
+        }
+
+        // 获取最近10条消息作为上下文调用ai生成新的answer
+        Map<String, Object> result = callModelWithTime(usedModel, newContent, sessionId);
+
+        // 5. 保存新的AI回答
+        ChatMessage newAiMessage = new ChatMessage(sessionId,
+                (String) result.get("answer"), MODEL_QWEN_TURBO, (Integer) result.get("time"));
+        messageMapper.insert(newAiMessage);
+
+        // 6. 更新会话的最后消息时间
+        updateSessionLastMessageTime(sessionId);
+
+        log.info("重新生成回答成功: 原消息={}, 新消息={}", messageId, newAiMessage.getId());
+
+        return newAiMessage;
+    }
+
+    /**
+     * 重新生成AI回答（不修改用户消息）
+     */
+    @Transactional
+    public ChatMessage regenerateAiResponse(Long messageId, String modelType) {
+        // 1. 获取AI消息
+        ChatMessage aiMessage = messageMapper.selectById(messageId);
+        if (aiMessage == null || !"assistant".equals(aiMessage.getRole())) {
+            throw new RuntimeException("只能重新生成AI消息");
+        }
+
+        String sessionId = aiMessage.getSessionId();
+
+        // 2. 找到对应的用户消息（上一条消息）
+        LambdaQueryWrapper<ChatMessage> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ChatMessage::getSessionId, sessionId)
+                .eq(ChatMessage::getRole, "user")
+                .lt(ChatMessage::getCreateTime, aiMessage.getCreateTime())
+                .orderByDesc(ChatMessage::getCreateTime)
+                .last("LIMIT 1");
+
+        ChatMessage userMessage = messageMapper.selectOne(wrapper);
+        if (userMessage == null) {
+            throw new RuntimeException("找不到对应的用户消息");
+        }
+
+        // 3. 删除旧的AI回复
+        messageMapper.deleteById(messageId);
+
+        // 4. 重新生成回答
+        String usedModel;
+        if ("auto".equals(modelType)) {
+            usedModel = routerService.routeModel(userMessage.getContent());
+        } else {
+            usedModel = modelType;
+        }
+
+        // 获取最近10条消息作为上下文调用ai生成新的answer
+        Map<String, Object> result = callModelWithTime(usedModel, userMessage.getContent(), sessionId);
+
+        // 5. 保存新的AI回答
+        ChatMessage newAiMessage = new ChatMessage(sessionId,
+                (String) result.get("answer"), usedModel, (Integer) result.get("time"));
+        messageMapper.insert(newAiMessage);
+
+        // 6. 更新会话的最后消息时间
+        updateSessionLastMessageTime(sessionId);
+
+        log.info("重新生成回答成功: 原AI消息={}, 新消息={}", messageId, newAiMessage.getId());
+
+        return newAiMessage;
+    }
+
+    /**
+     * 更新会话的最后消息时间
+     */
+    private void updateSessionLastMessageTime(String sessionId) {
+        ChatSession session = sessionMapper.selectById(sessionId);
+        if (session != null) {
+            // 获取最新的消息时间
+            LambdaQueryWrapper<ChatMessage> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(ChatMessage::getSessionId, sessionId)
+                    .orderByDesc(ChatMessage::getCreateTime)
+                    .last("LIMIT 1");
+            ChatMessage lastMessage = messageMapper.selectOne(wrapper);
+
+            if (lastMessage != null) {
+                session.setLastMessageTime(lastMessage.getCreateTime());
+            } else {
+                session.setLastMessageTime(session.getCreateTime());
+            }
+            sessionMapper.updateById(session);
+        }
+    }
+
+    /**
+     * 获取消息详情
+     */
+    public ChatMessage getMessage(Long messageId) {
+        return messageMapper.selectById(messageId);
     }
 }

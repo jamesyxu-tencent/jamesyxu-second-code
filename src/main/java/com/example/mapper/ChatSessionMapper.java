@@ -17,13 +17,13 @@ public interface ChatSessionMapper extends BaseMapper<ChatSession> {
     /**
      * 查询所有会话，按最后消息时间倒序
      */
-    @Select("SELECT * FROM chat_session ORDER BY last_message_time DESC")
+    @Select("SELECT * FROM chat_session where is_delete = 0 ORDER BY last_message_time DESC")
     List<ChatSession> selectAllOrderByLastMessageTime();
 
     /**
      * 查询最近10个会话
      */
-    @Select("SELECT * FROM chat_session ORDER BY last_message_time DESC LIMIT 10")
+    @Select("SELECT * FROM chat_session where is_delete = 0 ORDER BY last_message_time DESC LIMIT 10")
     List<ChatSession> selectTop10();
 
 }

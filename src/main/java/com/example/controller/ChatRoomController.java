@@ -121,4 +121,84 @@ public class ChatRoomController {
         );
         return ResponseEntity.ok(models);
     }
+
+    // ==================== 新增：消息操作接口 ====================
+
+    /**
+     * 删除单条消息
+     */
+    @DeleteMapping("/messages/{messageId}")
+    public ResponseEntity<Map<String, Object>> deleteMessage(@PathVariable Long messageId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            chatRoomService.deleteMessage(messageId);
+            response.put("success", true);
+            response.put("message", "删除成功");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("删除消息失败", e);
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * 编辑用户消息并重新生成
+     */
+    @PutMapping("/messages/{messageId}")
+    public ResponseEntity<Map<String, Object>> editMessage(
+            @PathVariable Long messageId,
+            @RequestParam String content,
+            @RequestParam(defaultValue = "auto") String model) {
+
+        Map<String, Object> response = new HashMap<>();
+        try {
+            ChatMessage newAiMessage = chatRoomService.editMessageAndRegenerate(messageId, content, model);
+            response.put("success", true);
+            response.put("message", "编辑成功");
+            response.put("newAiMessage", newAiMessage);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("编辑消息失败", e);
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * 重新生成AI回答
+     */
+    @PostMapping("/messages/{messageId}/regenerate")
+    public ResponseEntity<Map<String, Object>> regenerateMessage(
+            @PathVariable Long messageId,
+            @RequestParam(defaultValue = "auto") String model) {
+
+        Map<String, Object> response = new HashMap<>();
+        try {
+            ChatMessage newAiMessage = chatRoomService.regenerateAiResponse(messageId, model);
+            response.put("success", true);
+            response.put("message", "重新生成成功");
+            response.put("newAiMessage", newAiMessage);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("重新生成失败", e);
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * 获取单条消息详情
+     */
+    @GetMapping("/messages/{messageId}")
+    public ResponseEntity<ChatMessage> getMessage(@PathVariable Long messageId) {
+        ChatMessage message = chatRoomService.getMessage(messageId);
+        if (message == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(message);
+    }
 }
