@@ -114,10 +114,10 @@ public class ChatRoomController {
     @GetMapping("/models")
     public ResponseEntity<List<Map<String, String>>> getAvailableModels() {
         List<Map<String, String>> models = List.of(
-                Map.of("id", "auto", "name", "🤖 自动路由", "desc", "根据问题自动选择最合适的模型"),
-                Map.of("id", "qwen-turbo", "name", "☁️ 通义千问-turbo", "desc", "云端模型，响应快，成本低"),
-                Map.of("id", "qwen-plus", "name", "☁️ 通义千问-plus", "desc", "云端模型，质量高，适合复杂问题"),
-                Map.of("id", "ollama", "name", "💻 本地Ollama", "desc", "本地模型，数据安全，无需网络")
+                Map.of("id", "auto", "name", "🤖 自动路由 (智能选择)", "desc", "根据问题自动选择最合适的模型"),
+                Map.of("id", "qwen-turbo", "name", "☁️ 通义千问-turbo (快速)", "desc", "云端模型，响应快，成本低"),
+                Map.of("id", "qwen-plus", "name", "☁️ 通义千问-plus (高质量)", "desc", "云端模型，质量高，适合复杂问题"),
+                Map.of("id", "ollama", "name", "💻 本地Ollama (数据安全)", "desc", "本地模型，数据安全，无需网络")
         );
         return ResponseEntity.ok(models);
     }
