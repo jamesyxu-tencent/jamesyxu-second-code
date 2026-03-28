@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.PromptTemplate;
 import com.example.mapper.PromptTemplateMapper;
 import com.example.service.IPromptTemplateService;
+import com.example.service.chat.ChatService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class PromptTemplateServiceImpl extends ServiceImpl<PromptTemplateMapper,
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{(.*?)\\}");
 
     @Resource
-    private IChatService chatService;
+    private ChatService chatService;
 
     @Override
     public List<PromptTemplate> getActiveByCategory(String category) {
