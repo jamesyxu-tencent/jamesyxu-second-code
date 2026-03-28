@@ -1,7 +1,6 @@
-package com.example.service.impl;
+package com.example.service.code;
 
-import com.example.service.ICodingAssistantService;
-import com.example.service.PromptTemplateService;
+import com.example.service.IPromptTemplateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -9,12 +8,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class CodingAssistantServiceImpl implements ICodingAssistantService {
+public class CodingAssistantService {
 
     @Autowired
-    private PromptTemplateService templateService;
+    private IPromptTemplateService templateService;
 
-    @Override
     public String ask(String question) {
         Map<String, Object> params = new HashMap<>();
         params.put("question", question);
@@ -25,7 +23,6 @@ public class CodingAssistantServiceImpl implements ICodingAssistantService {
     /**
      * 代码审查
      */
-    @Override
     public String codeReview(String code, String language) {
         Map<String, Object> params = new HashMap<>();
         params.put("language", language);
@@ -37,7 +34,6 @@ public class CodingAssistantServiceImpl implements ICodingAssistantService {
     /**
      * 生成单元测试
      */
-    @Override
     public String generateUnitTest(String code, String language, String framework) {
         Map<String, Object> params = new HashMap<>();
         params.put("language", language);
@@ -50,7 +46,6 @@ public class CodingAssistantServiceImpl implements ICodingAssistantService {
     /**
      * 解释代码
      */
-    @Override
     public String explainCode(String code, String language, String level) {
         Map<String, Object> params = new HashMap<>();
         params.put("language", language);
@@ -63,7 +58,6 @@ public class CodingAssistantServiceImpl implements ICodingAssistantService {
     /**
      * 代码优化建议
      */
-    @Override
     public String optimizeCode(String code, String language, String target) {
         Map<String, Object> params = new HashMap<>();
         params.put("language", language);
@@ -76,7 +70,6 @@ public class CodingAssistantServiceImpl implements ICodingAssistantService {
     /**
      * 从注释生成代码
      */
-    @Override
     public String generateFromComments(String code, String language) {
         Map<String, Object> params = new HashMap<>();
         params.put("language", language);

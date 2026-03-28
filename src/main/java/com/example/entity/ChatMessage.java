@@ -48,6 +48,9 @@ public class ChatMessage extends BaseEntity {
     @TableField("response_time_ms")
     private Integer responseTimeMs;
 
+    @TableField(exist = false)
+    private Integer favorite;
+
     /**
      * 构造函数（用户消息）
      */

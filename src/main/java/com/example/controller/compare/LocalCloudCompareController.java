@@ -1,6 +1,6 @@
-package com.example.controller;
+package com.example.controller.compare;
 
-import com.example.service.IChatService;
+import com.example.service.chat.ChatService;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,7 +21,7 @@ public class LocalCloudCompareController {
     private ChatClient ollamaChatClient;  // 本地模型
 
     @Autowired
-    private IChatService chatService;  // 云端模型（Day 5）
+    private ChatService chatService;  // 云端模型（Day 5）
 
     @GetMapping
     public Map<String, Object> compare(

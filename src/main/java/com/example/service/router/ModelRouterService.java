@@ -1,7 +1,7 @@
-package com.example.service.impl;
+package com.example.service.router;
 
 import com.example.module.RoutingRule;
-import com.example.service.IChatService;
+import com.example.service.chat.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +11,7 @@ import java.util.*;
 public class ModelRouterService {
 
     @Autowired
-    private IChatService chatService;
+    private ChatService chatService;
 
     // 路由规则配置
     private final List<RoutingRule> routingRules = new ArrayList<>();

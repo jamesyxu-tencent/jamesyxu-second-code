@@ -1,9 +1,8 @@
-package com.example.service.impl;
+package com.example.service.parser;
 
 import com.example.module.PersonInfo;
 import com.example.module.Resume;
-import com.example.service.IChatService;
-import com.example.service.IOutputParserService;
+import com.example.service.chat.ChatService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,14 +15,14 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class OutputParserServiceImpl implements IOutputParserService {
+public class OutputParserService {
 
     @Autowired
-    private IChatService chatService;
+    private ChatService chatService;
 
     private final ObjectMapper objectMapper;
 
-    public OutputParserServiceImpl(ObjectMapper objectMapper) {
+    public OutputParserService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.objectMapper.registerModule(new JavaTimeModule());
     }
@@ -31,7 +30,6 @@ public class OutputParserServiceImpl implements IOutputParserService {
     /**
      * 解析PersonInfo
      */
-    @Override
     public PersonInfo parsePersonInfo(String text) throws IOException, InterruptedException {
         String instruction = "从以下文本中提取人员信息，包括姓名、年龄、职业、技能列表、联系方式（邮箱、电话、地址）";
         return parseToObject(instruction, text, PersonInfo.class);
@@ -40,7 +38,6 @@ public class OutputParserServiceImpl implements IOutputParserService {
     /**
      * 解析简历
      */
-    @Override
     public Resume parseResume(String text) throws IOException, InterruptedException {
         String instruction = """
                 从以下简历文本中提取完整信息，包括：

@@ -1,8 +1,8 @@
-package com.example.controller;
+package com.example.controller.parser;
 
 import com.example.module.PersonInfo;
 import com.example.module.Resume;
-import com.example.service.IOutputParserService;
+import com.example.service.parser.OutputParserService;
 import com.example.vo.base.ApiResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,7 +15,7 @@ import java.io.IOException;
 public class OutputParserController {
 
     @Autowired
-    private IOutputParserService outputParserService;
+    private OutputParserService outputParserService;
 
     @PostMapping("/api/parserPerson")
     public ApiResult<PersonInfo> parserPerson(@RequestParam("input") String input) throws IOException, InterruptedException {

@@ -1,8 +1,8 @@
-package com.example.controller;
+package com.example.controller.compare;
 
 import com.example.module.ComparisonResult;
-import com.example.service.IChatService;
-import com.example.service.impl.ModelComparisonService;
+import com.example.service.chat.ChatService;
+import com.example.service.compare.ModelComparisonService;
 import com.example.vo.base.ApiResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +20,7 @@ public class ModelComparisonController {
     private ModelComparisonService comparisonService;
 
     @Autowired
-    private IChatService chatService;
+    private ChatService chatService;
 
     /**
      * 并发对比多个模型

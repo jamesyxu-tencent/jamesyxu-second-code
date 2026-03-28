@@ -1,4 +1,4 @@
-package com.example.service.impl;
+package com.example.service.chat;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import com.example.config.ChatAiConfig;
 import com.example.dto.CrispeRequestDTO;
-import com.example.service.IChatService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,9 +21,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
-public class ChatServiceImpl implements IChatService {
+public class ChatService {
 
-    private static final Logger log = LoggerFactory.getLogger(ChatServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(ChatService.class);
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -33,7 +32,6 @@ public class ChatServiceImpl implements IChatService {
     @Resource
     private ChatAiConfig chatAiConfig;
 
-    @Override
     public String chat(String prompt, String model) {
         try {
             HttpClient client = HttpClient.newHttpClient();
@@ -61,7 +59,6 @@ public class ChatServiceImpl implements IChatService {
         return "Hello ! 欢迎进入 AI 开发世界！(AI 服务暂时不可用))";
     }
 
-    @Override
     public SseEmitter chatStream(String message, String sessionId) {
 
         log.info("用户提问：{}，sessionId：{}", message, sessionId);
@@ -135,7 +132,6 @@ public class ChatServiceImpl implements IChatService {
         return emitter;
     }
 
-    @Override
     public Map<String, String> clearConversation(String sessionId) {
         Map<String, String> result = new HashMap<>();
         if (sessionId != null && !sessionId.isEmpty()) {
@@ -149,7 +145,6 @@ public class ChatServiceImpl implements IChatService {
         return result;
     }
 
-    @Override
     public String chatWithRole(String question, String role) {
         // 构建系统提示词模板
         String systemPrompt = String.format("""
@@ -162,7 +157,6 @@ public class ChatServiceImpl implements IChatService {
         return this.chat(systemPrompt, null);
     }
 
-    @Override
     public String chatWithCrispe(CrispeRequestDTO dto) {
         // 构建系统提示词模板
         String systemPrompt = askWithCRISPE(dto);

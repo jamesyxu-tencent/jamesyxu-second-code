@@ -1,9 +1,9 @@
-package com.example.controller;
+package com.example.controller.prompt;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.entity.PromptTemplate;
-import com.example.service.PromptTemplateService;
+import com.example.service.IPromptTemplateService;
 import com.example.vo.base.ApiResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +15,7 @@ import java.util.Map;
 public class PromptTemplateController {
 
     @Autowired
-    private PromptTemplateService promptTemplateService;
+    private IPromptTemplateService promptTemplateService;
 
     @GetMapping("/render")
     public ApiResult<String> renderTemplate(@RequestParam String name,

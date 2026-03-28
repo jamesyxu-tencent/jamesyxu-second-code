@@ -1,6 +1,6 @@
-package com.example.controller;
+package com.example.controller.coding;
 
-import com.example.service.ICodingAssistantService;
+import com.example.service.code.CodingAssistantService;
 import com.example.vo.base.ApiResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 public class CodingAssistantController {
 
     @Autowired
-    private ICodingAssistantService codingService;
+    private CodingAssistantService codingService;
 
     /**
      * 询问java专家

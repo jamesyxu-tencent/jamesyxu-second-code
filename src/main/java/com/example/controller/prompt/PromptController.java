@@ -1,8 +1,8 @@
-package com.example.controller;
+package com.example.controller.prompt;
 
+import com.example.service.chat.ChatService;
 import jakarta.annotation.Resource;
 import com.example.dto.CrispeRequestDTO;
-import com.example.service.IChatService;
 import com.example.vo.base.ApiResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 public class PromptController {
 
     @Resource
-    private IChatService chatService;
+    private ChatService chatService;
 
     @GetMapping("/prompt/chatWithRole")
     public ApiResult<String> chatWithRole(@RequestParam("question") String question,

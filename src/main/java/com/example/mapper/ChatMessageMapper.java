@@ -17,7 +17,6 @@ public interface ChatMessageMapper extends BaseMapper<ChatMessage> {
     /**
      * 查询会话的所有消息（按时间正序）
      */
-    @Select("SELECT * FROM chat_message WHERE session_id = #{sessionId} and is_delete = 0 ORDER BY create_time ASC")
     List<ChatMessage> selectBySessionIdOrderByTime(@Param("sessionId") String sessionId);
 
     /**

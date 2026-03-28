@@ -1,4 +1,4 @@
-package com.example.controller;
+package com.example.controller.ollama;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;

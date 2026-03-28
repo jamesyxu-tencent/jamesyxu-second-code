@@ -602,6 +602,9 @@
                 <p>点击新建对话开始</p>
             </div>
         </div>
+        <button class="new-chat-btn" onclick="loadMyFavorites()">
+            <span>⭐</span> 我的收藏
+        </button>
     </div>
 
     <div class="main-area">
@@ -872,55 +875,148 @@
             }).catch(() => showToast('删除失败', 'error'));
     }
 
-    function renderMessages(msgs) {
-        const area = document.getElementById('messagesArea');
-        if (!msgs || !msgs.length) {
-            area.innerHTML = '<div class="empty-state" id="emptyMessageState"><h3>💬 开始对话</h3><p>输入消息开始聊天</p></div>';
+    // ==================== 消息渲染（带收藏功能 + 统一 createTime） ====================
+    function renderMessages(messages) {
+        const messagesArea = document.getElementById('messagesArea');
+
+        if (!messages || messages.length === 0) {
+            messagesArea.innerHTML = `
+        <div class="empty-state" id="emptyMessageState">
+            <h3>💬 开始对话</h3>
+            <p>选择模型，输入消息开始聊天</p>
+        </div>`;
             return;
         }
+
         let html = '';
-        msgs.forEach(m => {
-            const time = new Date(m.createTime).toLocaleString('zh-CN', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
+        messages.forEach(msg => {
+            const time = new Date(msg.createTime).toLocaleString('zh-CN', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
             });
-            if (m.role === 'user') {
+
+            // 收藏状态样式
+            const favColor = msg.favorite == 1 ? 'color:#f59e0b' : '';
+
+            if (msg.role === 'user') {
                 html += `
-                <div class="message user" data-message-id="${m.id}">
-                    <div class="message-actions">
-                        <div class="action-icon" onclick="copyMessage('${escapeHtml(m.content)}')">📋</div>
-                        <div class="action-icon" onclick="openEditModal(${m.id},'${escapeHtml(m.content)}')">✏️</div>
-                        <div class="action-icon" onclick="deleteMessage(${m.id})">🗑️</div>
-                    </div>
-                    <div class="message-content">${escapeHtml(m.content)}</div>
-                    <div class="message-footer"><span class="time-badge">${time}</span></div>
-                </div>`;
+            <div class="message user" data-message-id="${msg.id}">
+                <div class="message-actions">
+                    <div class="action-icon" onclick="copyMessage(this)" data-content="${msg.content}" title="复制">📋</div>
+                    <div class="action-icon" onclick="openEditModal(${msg.id}, '${escapeHtml(msg.content)}')" title="编辑">✏️</div>
+                    <div class="action-icon" onclick="deleteMessage(${msg.id})" title="删除">🗑️</div>
+                </div>
+                <div class="message-content">${escapeHtml(msg.content)}</div>
+                <div class="message-footer">
+                    <span class="time-badge">${time}</span>
+                </div>
+            </div>`;
             } else {
-                const cls = m.modelUsed === 'ollama' ? 'ollama' : (m.modelUsed === 'auto' ? 'auto' : 'cloud');
-                const icon = m.modelUsed === 'ollama' ? '💻' : '☁️';
+                const modelClass = msg.modelUsed === 'ollama' ? 'ollama' : (msg.modelUsed === 'auto' ? 'auto' : 'cloud');
+                const modelIcon = msg.modelUsed === 'ollama' ? '💻' : '☁️';
+
                 html += `
-                <div class="message assistant ${cls}" data-message-id="${m.id}">
-                    <div class="message-actions">
-                        <div class="action-icon" onclick="copyMessage('${escapeHtml(m.content)}')">📋</div>
-                        <div class="action-icon" onclick="regenerateMessage(${m.id})">🔄</div>
-                        <div class="action-icon" onclick="deleteMessage(${m.id})">🗑️</div>
-                    </div>
-                    <div class="message-content">${escapeHtml(m.content)}</div>
-                    <div class="message-footer">
-                        <span class="model-badge ${cls}">${icon} ${m.modelUsed || 'unknown'}</span>
-                        <span class="time-badge">${time}</span>
-                        ${m.responseTimeMs ? `<span class="time-badge">⏱️ ${m.responseTimeMs}ms</span>` : ''}
-                    </div>
-                </div>`;
+            <div class="message assistant ${modelClass}" data-message-id="${msg.id}">
+                <div class="message-actions">
+                    <div class="action-icon" onclick="copyMessage(this)" data-content="${msg.content}" title="复制">📋</div>
+                    <div class="action-icon" onclick="regenerateMessage(${msg.id})" title="重新生成">🔄</div>
+                    <div class="action-icon" onclick="deleteMessage(${msg.id})" title="删除">🗑️</div>
+                    <div class="action-icon" onclick="toggleFavorite(${msg.id})" id="fav_${msg.id}" style="${favColor}" title="收藏/取消收藏">★</div>
+                    <div class="action-icon" onclick="toggleSpeak(this)" data-text="${msg.content}" data-id="${msg.id}" title="朗读/停止">🔊</div>
+                </div>
+                <div class="message-content">${escapeHtml(msg.content)}</div>
+                <div class="message-footer">
+                    <span class="model-badge ${modelClass}">${modelIcon} ${msg.modelUsed || 'unknown'}</span>
+                    <span class="time-badge">${time}</span>
+                    ${msg.responseTimeMs ? `<span class="time-badge">⏱️ ${msg.responseTimeMs}ms</span>` : ''}
+                </div>
+            </div>`;
             }
         });
-        area.innerHTML = html;
-        area.scrollTop = area.scrollHeight;
+
+        messagesArea.innerHTML = html;
+        messagesArea.scrollTop = messagesArea.scrollHeight;
     }
 
-    function copyMessage(c) {
-        navigator.clipboard.writeText(c).then(() => showToast('复制成功')).catch(() => showToast('失败', 'error'));
+    // 全局记录当前正在朗读的消息ID，防止同时朗读
+    let currentSpeakingId = null;
+
+    // 朗读 / 停止 二合一
+    function toggleSpeak(elem) {
+        const text = elem.dataset.text;
+        const messageId = Number(elem.dataset.id);
+
+        if (speechSynthesis.speaking && currentSpeakingId === messageId) {
+            speechSynthesis.cancel();
+            elem.textContent = "🔊";
+            currentSpeakingId = null;
+            return;
+        }
+        if (speechSynthesis.speaking) {
+            speechSynthesis.cancel();
+        }
+
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "zh-CN";
+        u.onstart = () => {
+            elem.textContent = "🔇";
+            currentSpeakingId = messageId;
+        };
+        u.onend = () => {
+            elem.textContent = "🔊";
+            currentSpeakingId = null;
+        };
+        u.onerror = () => {
+            elem.textContent = "🔊";
+            currentSpeakingId = null;
+        };
+        speechSynthesis.speak(u);
+    }
+
+    // ==================== 收藏 / 取消收藏 ====================
+    async function toggleFavorite(messageId) {
+        try {
+            const res = await fetch(`/api/chat/feedback/toggle-favorite?messageId=${messageId}`, {
+                method: 'POST'
+            });
+
+            // 后端直接返回字符串：liked / unliked
+            const result = await res.text();
+
+            const btn = document.getElementById(`fav_${messageId}`);
+            if (result === 'liked') {
+                btn.style.color = '#f59e0b';
+                showToast('✨ 收藏成功');
+            } else if (result === 'unliked') {
+                btn.style.color = '';
+                showToast('已取消收藏');
+            }
+        } catch (e) {
+            showToast('收藏操作失败', 'error');
+        }
+    }
+
+    // ==================== 查看我的收藏 ====================
+    // ==================== 查看我的收藏 ====================
+    function loadMyFavorites() {
+        // ✅ 修复这里：textContent 是属性，不是方法！
+        document.getElementById('currentSessionName').textContent = '⭐ 我的收藏';
+        document.getElementById('currentSessionId').textContent = '';
+        document.getElementById('statsBar').style.display = 'none';
+
+        fetch('/api/chat/feedback/my-favorites')
+            .then(res => res.json())
+            .then(messages => {
+                renderMessages(messages);
+            })
+            .catch(() => showToast('加载收藏失败', 'error'));
+    }
+
+    function copyMessage(elem) {
+        // 从 data 属性安全拿内容，永不报错
+        const text = elem.dataset.content;
+        navigator.clipboard.writeText(text)
+            .then(() => showToast('复制成功'))
+            .catch(() => showToast('复制失败', 'error'));
     }
 
     async function deleteMessage(id) {
@@ -1037,8 +1133,19 @@
     }
 
     function escapeHtml(unsafe) {
-        if (!unsafe) return '';
-        return unsafe.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        // 1. 空值安全处理
+        if (unsafe === null || unsafe === undefined) {
+            return '';
+        }
+        // 2. 强制转成字符串，防止数字/布尔报错
+        const str = String(unsafe);
+        // 3. 安全正则转义，永不报错
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 
     function showTyping() {

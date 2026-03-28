@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * 提示词模板 Service 接口
  */
-public interface PromptTemplateService extends IService<PromptTemplate> {
+public interface IPromptTemplateService extends IService<PromptTemplate> {
 
     /**
      * 根据分类查询启用的模板

@@ -1,4 +1,4 @@
-package com.example.controller;
+package com.example.controller.ollama;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,7 +1,7 @@
-package com.example.controller;
+package com.example.controller.router;
 
-import com.example.service.IChatService;
-import com.example.service.impl.ModelRouterService;
+import com.example.service.chat.ChatService;
+import com.example.service.router.ModelRouterService;
 import com.example.vo.base.ApiResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +18,7 @@ public class ModelRouterController {
     private ModelRouterService routerService;
 
     @Autowired
-    private IChatService chatService;
+    private ChatService chatService;
 
     /**
      * 智能路由问答

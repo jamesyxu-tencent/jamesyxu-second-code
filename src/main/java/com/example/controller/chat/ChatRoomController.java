@@ -1,8 +1,8 @@
-package com.example.controller;
+package com.example.controller.chat;
 
 import com.example.entity.ChatMessage;
 import com.example.entity.ChatSession;
-import com.example.service.impl.ChatRoomService;
+import com.example.service.chat.ChatRoomService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

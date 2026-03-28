@@ -1,7 +1,7 @@
 package com.example.controller;
 
+import com.example.service.chat.ChatService;
 import jakarta.annotation.Resource;
-import com.example.service.IChatService;
 import com.example.vo.base.ApiResult;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +15,7 @@ import java.util.Map;
 public class AiHelloWorldController {
 
     @Resource
-    private IChatService chatService;
+    private ChatService chatService;
 
     @GetMapping("/api/hello")
     public ApiResult<String> showHelloPage() {

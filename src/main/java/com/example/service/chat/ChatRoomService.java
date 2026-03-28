@@ -1,10 +1,11 @@
-package com.example.service.impl;
+package com.example.service.chat;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.entity.ChatMessage;
 import com.example.entity.ChatSession;
 import com.example.mapper.ChatMessageMapper;
 import com.example.mapper.ChatSessionMapper;
+import com.example.service.router.ModelRouterService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;

@@ -1,7 +1,7 @@
-package com.example.service.impl;
+package com.example.service.compare;
 
 import com.example.module.ComparisonResult;
-import com.example.service.IChatService;
+import com.example.service.chat.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +12,7 @@ import java.util.concurrent.*;
 public class ModelComparisonService {
 
     @Autowired
-    private IChatService chatService;
+    private ChatService chatService;
 
     private final ExecutorService executor = Executors.newFixedThreadPool(5);
 
