@@ -201,4 +201,16 @@ public class ChatRoomController {
         }
         return ResponseEntity.ok(message);
     }
+
+    /**
+     * 发送消息（支持工具调用）
+     */
+    @PostMapping("/message/send-with-tools")
+    public ResponseEntity<ChatMessage> sendMessageWithTools(
+            @RequestParam String sessionId,
+            @RequestParam String message,
+            @RequestParam(defaultValue = "auto") String model) {
+        ChatMessage response = chatRoomService.sendMessageWithTools(sessionId, message, model);
+        return ResponseEntity.ok(response);
+    }
 }

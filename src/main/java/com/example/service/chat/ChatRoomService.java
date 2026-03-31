@@ -6,9 +6,15 @@ import com.example.entity.ChatSession;
 import com.example.mapper.ChatMessageMapper;
 import com.example.mapper.ChatSessionMapper;
 import com.example.service.router.ModelRouterService;
+import com.example.tools.CalculatorTools;
+import com.example.tools.DatabaseQueryTools;
+import com.example.tools.DateTimeTools;
+import com.example.tools.WeatherTools;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.ToolCallbacks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -17,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -50,6 +57,32 @@ public class ChatRoomService {
     @Autowired
     @Qualifier("qwenPlusChatClient")
     private ChatClient qwenPlusChatClient;
+
+    @Autowired
+    private WeatherTools weatherTools;
+
+    @Autowired
+    private DateTimeTools dateTimeTools;
+
+    @Autowired
+    private CalculatorTools calculatorTools;
+
+    @Autowired
+    private DatabaseQueryTools databaseQueryTools;
+
+    /**
+     * 获取所有可用的工具回调
+     * 将工具注册到ChatClient，使AI能够调用它们[citation:1]
+     */
+    private ToolCallback[] getAvailableTools() {
+        // 使用 ToolCallbacks.from() 将工具类转换为 ToolCallback 数组[citation:2]
+        return ToolCallbacks.from(
+                weatherTools,
+                dateTimeTools,
+                calculatorTools,
+                databaseQueryTools
+        );
+    }
 
     // ==================== 会话管理 ====================
 
@@ -534,5 +567,71 @@ public class ChatRoomService {
      */
     public ChatMessage getMessage(Long messageId) {
         return messageMapper.selectById(messageId);
+    }
+
+    /**
+     * 发送消息（支持工具调用）- 普通模式
+     */
+    public ChatMessage sendMessageWithTools(String sessionId, String content, String modelType) {
+        // 获取或创建会话
+        ChatSession session = sessionMapper.selectById(sessionId);
+        if (session == null) {
+            session = createSession(null);
+            sessionId = session.getId().toString();
+        }
+
+        // 保存用户消息
+        ChatMessage userMessage = new ChatMessage(sessionId, content);
+        messageMapper.insert(userMessage);
+
+        // 选择模型
+        String usedModel;
+        if (MODEL_AUTO.equals(modelType)) {
+            usedModel = routerService.routeModel(content);
+        } else {
+            usedModel = modelType;
+        }
+
+        // 获取对话上下文
+        String context = getContext(sessionId);
+
+        long startTime = System.currentTimeMillis();
+        String answer;
+
+        try {
+            ChatClient client = getChatClient(usedModel);
+
+            // 关键：使用 .tools() 方法注册工具[citation:2]
+            // AI会根据用户问题自动决定是否调用工具
+            answer = client.prompt()
+                    .system("你是一个智能助手。你可以使用提供的工具来获取实时信息、进行计算或执行操作。" +
+                            "当用户问及天气、时间、计算等问题时，请调用相应的工具。" +
+                            "\n历史对话：\n" + context)
+                    .user(content)
+                    .tools(getAvailableTools())  // 注册工具
+                    .call()
+                    .content();
+
+            long duration = System.currentTimeMillis() - startTime;
+
+            // 保存AI回答
+            ChatMessage assistantMessage = new ChatMessage(sessionId, answer, usedModel, (int) duration);
+            messageMapper.insert(assistantMessage);
+
+            session.setModelType(modelType);
+            session.setLastMessageTime(LocalDateTime.now());
+            sessionMapper.updateById(session);
+
+            log.info("工具调用消息发送成功: session={}, model={}, time={}ms", sessionId, usedModel, duration);
+            return assistantMessage;
+
+        } catch (Exception e) {
+            log.error("调用模型失败", e);
+            ChatMessage errorMessage = new ChatMessage(sessionId,
+                    "抱歉，调用模型时出错：" + e.getMessage(), usedModel,
+                    (int) (System.currentTimeMillis() - startTime));
+            messageMapper.insert(errorMessage);
+            return errorMessage;
+        }
     }
 }
