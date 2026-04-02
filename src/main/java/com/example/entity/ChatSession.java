@@ -29,7 +29,7 @@ public class ChatSession extends BaseEntity {
     /**
      * 最后消息时间
      */
-    @TableField(value = "last_message_time", fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "last_message_time")
     private LocalDateTime lastMessageTime;
 
     /**

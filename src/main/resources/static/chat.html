@@ -769,7 +769,7 @@
                     loadSessionStats(currentSessionId);
                 }).catch(finish);
         } else {
-            fetch(`/api/chat/send?sessionId=${currentSessionId}&message=${encodeURIComponent(msg)}&model=${model}`, {method: 'POST'})
+            fetch(`/api/chat/send-with-tools?sessionId=${currentSessionId}&message=${encodeURIComponent(msg)}&model=${model}`, {method: 'POST'})
                 .then(finish).catch(finish);
         }
     }

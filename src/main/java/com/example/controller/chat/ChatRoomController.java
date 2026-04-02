@@ -205,7 +205,7 @@ public class ChatRoomController {
     /**
      * 发送消息（支持工具调用）
      */
-    @PostMapping("/message/send-with-tools")
+    @PostMapping("/send-with-tools")
     public ResponseEntity<ChatMessage> sendMessageWithTools(
             @RequestParam String sessionId,
             @RequestParam String message,
