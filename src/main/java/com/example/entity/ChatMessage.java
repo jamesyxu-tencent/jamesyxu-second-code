@@ -48,6 +48,12 @@ public class ChatMessage extends BaseEntity {
     @TableField("response_time_ms")
     private Integer responseTimeMs;
 
+    /**
+     * 响应时间（毫秒）
+     */
+    @TableField("tokens")
+    private Integer tokens;
+
     @TableField(exist = false)
     private Integer favorite;
 
@@ -64,10 +70,11 @@ public class ChatMessage extends BaseEntity {
     /**
      * 构造函数（AI消息）
      */
-    public ChatMessage(String sessionId, String content, String modelUsed, Integer responseTimeMs) {
+    public ChatMessage(String sessionId, String content, Integer tokens, String modelUsed, Integer responseTimeMs) {
         this.sessionId = sessionId;
         this.role = "assistant";
         this.content = content;
+        this.tokens = tokens;
         this.modelUsed = modelUsed;
         this.responseTimeMs = responseTimeMs;
         this.createTime = LocalDateTime.now();

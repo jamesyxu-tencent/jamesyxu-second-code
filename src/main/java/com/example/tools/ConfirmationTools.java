@@ -40,14 +40,12 @@ public class ConfirmationTools {
         pendingOperations.put(confirmId, pending);
 
         // 返回给AI，让AI展示给用户
+        String result = null;
         if ("high".equals(riskLevel) || "medium".equals(riskLevel)) {
-            return String.format("""
-                    【需要确认】操作ID: %s
-                    操作: %s。
-                    """, confirmId, operation);
+            result = String.format("请用户确认是否执行【%s】任务", operation);
         }
 
-        return null;
+        return result;
     }
 
     /**

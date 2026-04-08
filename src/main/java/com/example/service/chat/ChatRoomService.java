@@ -5,6 +5,7 @@ import com.example.entity.ChatMessage;
 import com.example.entity.ChatSession;
 import com.example.mapper.ChatMessageMapper;
 import com.example.mapper.ChatSessionMapper;
+import com.example.module.AiResult;
 import com.example.module.PendingOperation;
 import com.example.service.router.ModelRouterService;
 import com.example.tools.*;
@@ -71,6 +72,9 @@ public class ChatRoomService {
     @Autowired
     private EmailTools emailTools;
 
+    @Autowired
+    private ConfirmationTools confirmationTools;
+
     /**
      * 获取所有可用的工具回调
      * 将工具注册到ChatClient，使AI能够调用它们[citation:1]
@@ -82,7 +86,8 @@ public class ChatRoomService {
                 dateTimeTools,
                 calculatorTools,
                 databaseQueryTools,
-                emailTools
+                emailTools,
+                confirmationTools
         );
     }
 
@@ -165,6 +170,8 @@ public class ChatRoomService {
         long startTime = System.currentTimeMillis();
         String usedModel = null;
 
+        Integer tokens = 0;
+
         try {
             if (MODEL_AUTO.equals(modelType)) {
                 usedModel = routerService.routeModel(content);
@@ -174,10 +181,11 @@ public class ChatRoomService {
 
             long duration = System.currentTimeMillis() - startTime;
 
-            String answer = callModel(usedModel, content, sessionId);
+            AiResult result = callModel(usedModel, content, sessionId);
+            tokens = result.getTokens();
 
             // 保存AI回答
-            ChatMessage assistantMessage = new ChatMessage(sessionId, answer, usedModel, (int) duration);
+            ChatMessage assistantMessage = new ChatMessage(sessionId, result.getAnswer(), tokens, usedModel, (int) duration);
             messageMapper.insert(assistantMessage);
 
             session.setModelType(modelType);
@@ -190,7 +198,7 @@ public class ChatRoomService {
         } catch (Exception e) {
             log.error("调用模型失败", e);
             ChatMessage errorMessage = new ChatMessage(sessionId,
-                    "抱歉，调用模型时出错：" + e.getMessage(), usedModel != null ? usedModel : "error",
+                    "抱歉，调用模型时出错：" + e.getMessage(), tokens, usedModel != null ? usedModel : "error",
                     (int) (System.currentTimeMillis() - startTime));
             messageMapper.insert(errorMessage);
             return errorMessage;
@@ -220,11 +228,11 @@ public class ChatRoomService {
 
         // 保存两个回答
         ChatMessage cloudMessage = new ChatMessage(sessionId,
-                (String) cloudResult.get("answer"), MODEL_QWEN_TURBO, (Integer) cloudResult.get("time"));
+                (String) cloudResult.get("answer"), (Integer) cloudResult.get("tokens"), MODEL_QWEN_TURBO, (Integer) cloudResult.get("time"));
         messageMapper.insert(cloudMessage);
 
         ChatMessage ollamaMessage = new ChatMessage(sessionId,
-                (String) ollamaResult.get("answer"), MODEL_OLLAMA, (Integer) ollamaResult.get("time"));
+                (String) ollamaResult.get("answer"), (Integer) cloudResult.get("tokens"), MODEL_OLLAMA, (Integer) ollamaResult.get("time"));
         messageMapper.insert(ollamaMessage);
 
         // 更新会话
@@ -242,17 +250,19 @@ public class ChatRoomService {
     /**
      * 调用指定模型
      */
-    private String callModel(String modelType, String content, String sessionId) {
+    private AiResult callModel(String modelType, String content, String sessionId) {
+        AiResult result = new AiResult();
         ChatClient client = getChatClient(modelType);
 
         // 获取最近10条消息作为上下文
         String context = getContext(sessionId);
-
-        return client.prompt()
+        ChatClient.CallResponseSpec responseSpec = client.prompt()
                 .system("你是一个AI助手，请基于对话历史回答问题。\n历史对话：\n" + context)
                 .user(content)
-                .call()
-                .content();
+                .call();
+        result.setAnswer(responseSpec.content());
+        result.setTokens(responseSpec.chatResponse().getMetadata().getUsage().getTotalTokens());
+        return result;
     }
 
     /**
@@ -284,11 +294,12 @@ public class ChatRoomService {
         long startTime = System.currentTimeMillis();
 
         try {
-            String answer = callModel(modelType, content, sessionId);
+            AiResult aiResult = callModel(modelType, content, sessionId);
             long duration = System.currentTimeMillis() - startTime;
 
             result.put("success", true);
-            result.put("answer", answer);
+            result.put("answer", aiResult.getAnswer());
+            result.put("tokens", aiResult.getTokens());
             result.put("time", (int) duration);
             result.put("model", modelType);
 
@@ -296,6 +307,7 @@ public class ChatRoomService {
             log.error("调用模型失败: {}", modelType, e);
             result.put("success", false);
             result.put("answer", "调用失败：" + e.getMessage());
+            result.put("tokens", 0);
             result.put("time", (int) (System.currentTimeMillis() - startTime));
             result.put("model", modelType);
             result.put("error", e.getMessage());
@@ -478,7 +490,7 @@ public class ChatRoomService {
 
         // 5. 保存新的AI回答
         ChatMessage newAiMessage = new ChatMessage(sessionId,
-                (String) result.get("answer"), MODEL_QWEN_TURBO, (Integer) result.get("time"));
+                (String) result.get("answer"), (Integer) result.get("tokens"), MODEL_QWEN_TURBO, (Integer) result.get("time"));
         messageMapper.insert(newAiMessage);
 
         // 6. 更新会话的最后消息时间
@@ -531,7 +543,7 @@ public class ChatRoomService {
 
         // 5. 保存新的AI回答
         ChatMessage newAiMessage = new ChatMessage(sessionId,
-                (String) result.get("answer"), usedModel, (Integer) result.get("time"));
+                (String) result.get("answer"), (Integer) result.get("tokens"), usedModel, (Integer) result.get("time"));
         messageMapper.insert(newAiMessage);
 
         // 6. 更新会话的最后消息时间
@@ -599,24 +611,27 @@ public class ChatRoomService {
 
         long startTime = System.currentTimeMillis();
         String answer;
+        Integer tokens = 0;
 
         try {
             ChatClient client = getChatClient(usedModel);
 
             // 关键：使用 .tools() 方法注册工具[citation:2]
             // AI会根据用户问题自动决定是否调用工具
-            answer = client.prompt()
+            ChatClient.CallResponseSpec responseSpec = client.prompt()
                     .system("你是一个智能助手。你可以使用提供的tools来获取相关信息、执行相关操作。" +
                             "\n历史对话：\n" + context)
                     .user(content)
                     .tools(getAvailableTools())  // 注册工具
-                    .call()
-                    .content();
+                    .call();
+            answer = responseSpec.content();
+
+            tokens = responseSpec.chatResponse().getMetadata().getUsage().getTotalTokens();
 
             long duration = System.currentTimeMillis() - startTime;
 
             // 保存AI回答
-            ChatMessage assistantMessage = new ChatMessage(sessionId, answer, usedModel, (int) duration);
+            ChatMessage assistantMessage = new ChatMessage(sessionId, answer, tokens, usedModel, (int) duration);
             messageMapper.insert(assistantMessage);
 
             session.setModelType(modelType);
@@ -629,7 +644,7 @@ public class ChatRoomService {
         } catch (Exception e) {
             log.error("调用模型失败", e);
             ChatMessage errorMessage = new ChatMessage(sessionId,
-                    "抱歉，调用模型时出错：" + e.getMessage(), usedModel,
+                    "抱歉，调用模型时出错：" + e.getMessage(), tokens, usedModel,
                     (int) (System.currentTimeMillis() - startTime));
             messageMapper.insert(errorMessage);
             return errorMessage;
