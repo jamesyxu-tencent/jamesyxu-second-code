@@ -1,6 +1,7 @@
 package com.example.service.chat;
 
 import com.example.module.ToolNode;
+import com.example.module.travel.TravelPlanResult;
 import com.example.tools.utils.ToolChainUtil;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -163,25 +164,6 @@ public class TravelPlannerService {
                 result.getDuration(),
                 result.getData().size()
         );
-    }
-
-    /**
-     * 旅行规划结果类
-     */
-    public static class TravelPlanResult {
-        private final Map<String, Object> data;
-        private final long duration;
-        private final boolean parallel;
-
-        public TravelPlanResult(Map<String, Object> data, long duration, boolean parallel) {
-            this.data = data;
-            this.duration = duration;
-            this.parallel = parallel;
-        }
-
-        public Map<String, Object> getData() { return data; }
-        public long getDuration() { return duration; }
-        public boolean isParallel() { return parallel; }
     }
 
     /**
