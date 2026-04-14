@@ -14,6 +14,16 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
   ai:
+    vectorstore:
+      chroma:
+        # Chroma服务地址
+        base-url: http://localhost:8000
+        # 集合名称（相当于表名）
+        collection-name: knowledge_base
+        # 向量维度（通义千问Embedding为1536）
+        vector-dimension: 1536
+        # 相似度计算方式
+        similarity-metric: cosine
     default-model: cloud
     openai:
       # 通义千问的 OpenAI 兼容接口地址
@@ -30,6 +40,10 @@ spring:
           max-tokens: 2000
           # Top-p 采样
           top-p: 0.9
+      # 暂时注释掉自动装配embedding,该手动
+#      embedding:
+#        options:
+#          model: text-embedding-v2
     ollama:
       base-url: http://localhost:11434
       # 修正后的完整配置示例（适配Ollama）
@@ -115,3 +129,13 @@ mybatis-plus:
     lazy-loading-enabled: false
     #  aggressive-lazy-loading已被移除，使用lazy-load-trigger-methods代替
     lazy-load-trigger-methods: equals,clone,hashCode,toString
+
+# ===== 文档分块配置 =====
+rag:
+  chunk:
+    # 分块大小（字符数）
+    size: 500
+    # 分块重叠（保持上下文连贯）
+    overlap: 50
+    # 最大检索数量
+    top-k: 5

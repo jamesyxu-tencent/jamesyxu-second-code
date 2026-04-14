@@ -127,6 +127,34 @@
 			<artifactId>reactor-core</artifactId>
 		</dependency>
 
+		<!-- Spring AI 向量存储支持 -->
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-chroma-store-spring-boot-starter</artifactId>
+			<version>1.0.0-M6</version>
+		</dependency>
+
+		<!-- PDF解析（可选） -->
+		<dependency>
+			<groupId>org.apache.pdfbox</groupId>
+			<artifactId>pdfbox</artifactId>
+			<version>3.0.0</version>
+		</dependency>
+
+		<!-- Word解析（可选） -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>5.2.5</version>
+		</dependency>
+
+		<!-- 文本分块工具 -->
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-tika-document-reader</artifactId>
+			<version>1.0.0-M6</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
