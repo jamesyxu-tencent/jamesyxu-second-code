@@ -24,6 +24,8 @@ spring:
         vector-dimension: 1536
         # 相似度计算方式
         similarity-metric: cosine
+        # 是否自动初始化集合（设为true自动创建）
+        initialize-schema: true
     default-model: cloud
     openai:
       # 通义千问的 OpenAI 兼容接口地址

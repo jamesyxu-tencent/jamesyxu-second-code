@@ -36,8 +36,8 @@ public class KnowledgeBaseService {
      * @return 成功存储的文档块数量
      */
     public int addDocument(String title, String content, String category) {
-        // 1. 文本分块
-        List<String> chunks = chunkingService.chunkByFixedSize(content);
+        // 1. 按段落分块
+        List<String> chunks = chunkingService.chunkBySemantic(content);
 
         // 2. 创建Document对象
         List<Document> documents = new ArrayList<>();
@@ -64,7 +64,32 @@ public class KnowledgeBaseService {
         SearchRequest request = SearchRequest.builder()
                 .query(query)
                 .topK(topK)
-                .similarityThreshold(0.7)  // 相似度阈值
+                .similarityThreshold(0.3)  // 相似度阈值
+                .build();
+
+        return vectorStore.similaritySearch(request);
+    }
+
+    /**
+     * 搜索相关内容
+     */
+    public List<Document> searchAll() {
+        SearchRequest request = SearchRequest.builder()
+                .query("")
+                .topK(1000)
+                .similarityThreshold(0.0)  // 设置为0，返回所有文档
+                .build();
+        return vectorStore.similaritySearch(request);
+    }
+
+    /**
+     * 搜索相关内容（可自定义阈值）
+     */
+    public List<Document> searchWithThreshold(String query, int topK, double threshold) {
+        SearchRequest request = SearchRequest.builder()
+                .query(query)
+                .topK(topK)
+                .similarityThreshold(threshold)
                 .build();
 
         return vectorStore.similaritySearch(request);
